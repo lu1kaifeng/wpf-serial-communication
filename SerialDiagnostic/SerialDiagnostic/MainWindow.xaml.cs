@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,18 +13,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
-using System.IO.Ports;
 using System.Windows.Threading;
-using System.Threading;
 
-namespace SerialCommunication
+namespace SerialDiagnostic
 {
-    class MainDataContext
-    {
-        public float Weight { get; set; }
-        public VehicleRecord VehicleRecord;
-    }
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -31,17 +24,47 @@ namespace SerialCommunication
     {
         SerialPort serialPort = new SerialPort();
         string recievedData;
+
         FlowDocument mcFlowDoc = new FlowDocument();
         Paragraph para = new Paragraph();
 
         public MainWindow()
         {
             InitializeComponent();
-           
         }
 
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            string[] ports = SerialPort.GetPortNames();
+            //Console.WriteLine("The following serial ports were found:");            
+            foreach (string port in ports)
+            {
+                //Console.WriteLine(port); // Display each port name to the console.
+                cBoxComPort.Items.Add(port);
+            }
+        }
 
-        
+        private void BtnOpen_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                serialPort.PortName = cBoxComPort.Text;
+                serialPort.BaudRate = Convert.ToInt32(cBoxBaudRate.Text);
+                serialPort.DataBits = Convert.ToInt32(cBoxDataBits.Text);
+                serialPort.StopBits = (StopBits)Enum.Parse(typeof(StopBits), cBoxStopBits.Text);
+                serialPort.Parity = (Parity)Enum.Parse(typeof(Parity), cBoxParityBits.Text);
+                serialPort.Open(); // Open port.
+                //serialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(serialPort_DataRecieved);
+                serialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(port_DataReceived);
+                pBar.Value = 100;
+            }
+            catch (Exception err)
+            {
+                MessageBox.Show(err.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+        }
+
         /// <summary>
         /// 串口读取数据
         /// </summary>
@@ -86,11 +109,12 @@ namespace SerialCommunication
                     Dispatcher.Invoke(DispatcherPriority.Send, new UpdateUiTextDelegate(DataWrited), recievedData);
                     Dispatcher.Invoke(DispatcherPriority.Send, new UpdateUiTextDelegate(WeightDataWrited), "No Weight Data");
                 }
-            }catch(Exception ex)
-            {
-                
             }
-           
+            catch (Exception ex)
+            {
+
+            }
+
 
         }
 
@@ -111,11 +135,12 @@ namespace SerialCommunication
                 weight = weight.Replace("+", "");
                 weight = weight.Replace("-", "");
                 double num = int.Parse(weight.Substring(0, 6));
-                num = num / Math.Pow(10,weight[6] - 0x30);
+                num = num / Math.Pow(10, weight[6] - 0x30);
                 return sign.ToString() + num.ToString();
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message+" Data:"+weight);
+                MessageBox.Show("Error: " + ex.Message + " Data:" + weight);
                 return "Error: " + ex.Message + " Data:" + weight;
             }
         }
@@ -151,7 +176,7 @@ namespace SerialCommunication
 
         private void DataWrited(string text)
         {
-            tBoxInData.Text +=text+"\n";
+            tBoxInData.Text += text + "\n";
         }
         private void HexDataWrited(string text)
         {
@@ -169,4 +194,4 @@ namespace SerialCommunication
             tbWeight.Text = "";
         }
     }
-}
+    }

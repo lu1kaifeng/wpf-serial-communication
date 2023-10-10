@@ -5,123 +5,73 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SerialCommunication"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="600" Loaded="Window_Loaded">
+        Title="MainWindow" Height="700" Width="600">
+    <Window.DataContext>
+        <local:MainDataContext/>
+    </Window.DataContext>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="227*" />
+            <ColumnDefinition Width="73*"/>
+            <ColumnDefinition Width="300*" />
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Column="0" Margin="5 10 5 10">
-            <GroupBox Header="COM Port Control" Padding="10">
-                <StackPanel>
-                    <Grid Margin="0 0 0 5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Margin="5,10,5,10" Grid.ColumnSpan="2">
 
-                        <TextBlock Text="COM PORT" Margin="10 0 5 0" Grid.Column="0" />
-                        <ComboBox x:Name="cBoxComPort" Margin="5 0 10 0" Grid.Column="1" />
-                    </Grid>
-
-                    <Grid Margin="0 5 0 5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Text="BAUD RATE" Margin="10 0 5 0" Grid.Column="0" />
-                        <ComboBox Name="cBoxBaudRate" SelectedIndex="2" Margin="5 0 10 0" Grid.Column="1">
-                            <ComboBoxItem>2400</ComboBoxItem>
-                            <ComboBoxItem>4800</ComboBoxItem>
-                            <ComboBoxItem>9600</ComboBoxItem>
-                        </ComboBox>
-                    </Grid>
-
-                    <Grid Margin="0 5 0 5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Text="DATA BITS" Margin="10 0 5 0" Grid.Column="0" />
-                        <ComboBox Name="cBoxDataBits" SelectedIndex="2" Margin="5 0 10 0" Grid.Column="1">
-                            <ComboBoxItem>6</ComboBoxItem>
-                            <ComboBoxItem>7</ComboBoxItem>
-                            <ComboBoxItem>8</ComboBoxItem>
-                        </ComboBox>
-                    </Grid>
-
-                    <Grid Margin="0 5 0 5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Text="STOP BITS" Margin="10 0 5 0" Grid.Column="0" />
-                        <ComboBox Name="cBoxStopBits" SelectedIndex="0" Margin="5 0 10 0" Grid.Column="1">
-                            <ComboBoxItem>One</ComboBoxItem>
-                            <ComboBoxItem>Two</ComboBoxItem>
-                        </ComboBox>
-                    </Grid>
-
-                    <Grid Margin="0 5 0 5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Text="PARITY BITS" Margin="10 0 5 0" Grid.Column="0" />
-                        <ComboBox Name="cBoxParityBits" SelectedIndex="0" Margin="5 0 10 0" Grid.Column="1">
-                            <ComboBoxItem>None</ComboBoxItem>
-                            <ComboBoxItem>Odd</ComboBoxItem>
-                            <ComboBoxItem>Even</ComboBoxItem>
-                        </ComboBox>
-                    </Grid>
-                </StackPanel>
+            <GroupBox Header="称量信息" Padding="0">
+                <local:PoundView Weight="{Binding Weight,Mode=TwoWay}" />
+                
             </GroupBox>
-
+            <GroupBox Header="车辆信息" Padding="0">
+                <local:VehicleView VehicleRecord="{Binding VehicleRecord}" />
+            </GroupBox>
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*" />
                     <ColumnDefinition Width="*" />
+
                 </Grid.ColumnDefinitions>
 
-                <GroupBox Margin="0 0 5 0" Grid.Column="0">
-                    <StackPanel>
+                <GroupBox Margin="0 0 0 0" Grid.Column="0">
+                    <StackPanel Margin="0,0,0,0">
+                       
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Button Name="btnOpen" Margin="10 10 5 0" Content="OPEN" Grid.Column="0" Click="BtnOpen_Click" />
-                            <Button Name="btnClose" Margin="5 10 10 0" Content="CLOSE" Grid.Column="1" Click="BtnClose_Click" />
+                            
+                            <Button x:Name="btnClose" Margin="5 10 10 0" Content="CLOSE" Grid.Column="1" Click="BtnClose_Click" />
+                            <Button x:Name="btnClear" Margin="5 10 10 0" Content="CLEAR" Grid.Column="2" Click="btnClear_Click" />
                         </Grid>
 
-                        <ProgressBar Name="pBar" Height="20" Margin="10 10 10 10" VerticalAlignment="Bottom"/>
+                        <ProgressBar x:Name="pBar" Height="20" Margin="10 10 10 10" VerticalAlignment="Bottom"/>
                     </StackPanel>
                 </GroupBox>
 
-                <Button Name="btnSendData" Margin="5 0 5 0" Content="SEND DATA"  Grid.Column="1" Click="BtnSendData_Click" />
+                <!---<Button Name="btnSendData" Margin="5 0 5 0" Content="SEND DATA"  Grid.Column="1" Click="BtnSendData_Click" />-->
 
             </Grid>
         </StackPanel>
 
-        <Grid Grid.Column="1">
+        <Grid Grid.Column="2">
             <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <GroupBox Header="Out Data" Padding="10" Grid.Row="0">
-                <TextBox Name="tBoxOutData" Grid.Row="0" />
+            <GroupBox Header="In Data Hex" Padding="10" Grid.Row="0">
+                <TextBox Name="tBoxInDataHex" Background="#eee" IsReadOnly="True" Grid.Row="0"/>
             </GroupBox>
 
-            <GroupBox Header="In Data" Padding="10" Grid.Row="1">
-                <TextBox Name="tBoxInData" Background="#eee" IsReadOnly="True" Grid.Row="0"/>
+            <GroupBox Header="In Data Text" Padding="10" Grid.Row="1">
+                <TextBox Name="tBoxInData" Text="{Binding Weight}" Background="#eee" IsReadOnly="True" Grid.Row="0"/>
             </GroupBox>
-        </Grid> 
+            <GroupBox Header="Weight Data" Padding="10" Grid.Row="2">
+                <TextBox Name="tbWeight" Background="#eee" IsReadOnly="True" Grid.Row="0"/>
+            </GroupBox>
+        </Grid>
     </Grid>
 </Window>

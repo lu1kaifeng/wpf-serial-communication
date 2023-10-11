@@ -5,7 +5,7 @@ VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SerialCommunication", "SerialCommunication.csproj", "{518C08FA-4BB9-4FDD-A17A-6332635BAA0F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SerialDiagnostic", "SerialDiagnostic\SerialDiagnostic\SerialDiagnostic.csproj", "{75C6604F-AE5A-4179-A6D8-D86126A04AB3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SerialDiagnostic", "SerialDiagnostic\SerialDiagnostic\SerialDiagnostic.csproj", "{75C6604F-AE5A-4179-A6D8-D86126A04AB3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

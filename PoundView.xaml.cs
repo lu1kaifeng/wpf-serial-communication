@@ -52,7 +52,9 @@ namespace SerialCommunication
         }
         private PoundComm PoundComm = null;
         public static readonly DependencyProperty OnlineProperty = DependencyProperty.Register("Online", typeof(bool), typeof(PoundView), new PropertyMetadata(false));
-        public static readonly DependencyProperty WeightProperty = DependencyProperty.Register("Weight", typeof(float), typeof(PoundView), new PropertyMetadata((float)0.0));
+        public static readonly DependencyProperty WeightProperty = DependencyProperty.Register("Weight", typeof(float), typeof(PoundView), new PropertyMetadata((float)0.0, (e,s) => {
+            ((PoundView)e).Weight = (float)s.NewValue;
+        }));
         public PoundView()
         {
             InitializeComponent();

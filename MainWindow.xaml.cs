@@ -16,13 +16,110 @@ using System.Windows.Shapes;
 using System.IO.Ports;
 using System.Windows.Threading;
 using System.Threading;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace SerialCommunication
 {
-    class MainDataContext
+    class MainDataContext: INotifyPropertyChanged
     {
-        public float Weight { get; set; }
-        public VehicleRecord VehicleRecord;
+        private bool _EnterFlag = true;
+        public bool EnterFlag { set {
+                _EnterFlag = value;
+                OnPropertyChanged();
+                OnPropertyChanged("EnterButtonEnabled");
+                OnPropertyChanged("ExitButtonEnabled");
+            } get {
+                return _EnterFlag;
+            } }
+        
+        private float _Weight = 0.0f;
+        public float Weight { get { 
+                return _Weight;
+            } set { 
+                _Weight = value;
+                
+                VehicleRecord vehicleRecord = new VehicleRecord();
+                if (VehicleRecord != null)
+                { 
+                    vehicleRecord.ExitWeight = VehicleRecord.ExitWeight;
+                    vehicleRecord.EnterWeight   = VehicleRecord.EnterWeight;
+                    vehicleRecord.License = VehicleRecord.License;
+                    vehicleRecord.DateCreated = VehicleRecord.DateCreated;
+                }
+                else
+                {
+                    VehicleRecordInit(vehicleRecord);
+                }
+
+                    if (EnterFlag) { 
+                    vehicleRecord.EnterWeight = _Weight;
+                }
+                else
+                {
+                    vehicleRecord.ExitWeight = _Weight;
+                }
+                VehicleRecord = vehicleRecord;
+                OnPropertyChanged();
+                OnPropertyChanged("EnterButtonEnabled");
+                OnPropertyChanged("ExitButtonEnabled");
+            } 
+        }
+
+        public VehicleRecord _VehicleRecord = null;
+
+        public bool EnterButtonEnabled { get {
+                if(VehicleRecord == null) return false; 
+                return VehicleRecord.EnterWeight > 0 && EnterFlag;
+            } }
+
+        public bool ExitButtonEnabled
+        {
+            get
+            {
+                if (VehicleRecord == null) return false;
+                return VehicleRecord.ExitWeight > 0 && !EnterFlag;
+            }
+        }
+
+        public VehicleRecord VehicleRecord { get {
+            return _VehicleRecord;
+            } set { 
+                _VehicleRecord = value;
+                OnPropertyChanged();
+            } }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void Reset()
+        {
+            VehicleRecord vehicleRecord = new VehicleRecord();
+            VehicleRecordInit(vehicleRecord);
+            VehicleRecord = vehicleRecord;
+            EnterFlag = true;
+        }
+        private void VehicleRecordInit(VehicleRecord vehicleRecord)
+        {
+            vehicleRecord.EnterWeight = -1;
+            vehicleRecord.ExitWeight = -1;
+            vehicleRecord.License = null;
+            vehicleRecord.DateCreated = DateTime.Now;
+        }
+        public void Load(VehicleRecord externalVehicleRecord)
+        {
+            VehicleRecord vehicleRecord = new VehicleRecord();
+            vehicleRecord.EnterWeight = externalVehicleRecord.EnterWeight;
+            vehicleRecord.ExitWeight = externalVehicleRecord.ExitWeight;
+            vehicleRecord.License = externalVehicleRecord.License;
+            vehicleRecord.DateCreated = externalVehicleRecord.DateCreated;
+            VehicleRecord = vehicleRecord;
+            EnterFlag = false;
+        }
     }
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -33,140 +130,46 @@ namespace SerialCommunication
         string recievedData;
         FlowDocument mcFlowDoc = new FlowDocument();
         Paragraph para = new Paragraph();
-
+        MainDataContext MainDataContext = new MainDataContext();
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = MainDataContext;
+        }
+        int i = 1;
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            i++;
            
+            VehicleRecord vehicleRecord = new VehicleRecord();
+            vehicleRecord.EnterWeight = i;
+            vehicleRecord.ExitWeight = -1;
+            vehicleRecord.License = null;
+            MainDataContext.VehicleRecord = vehicleRecord;
+            MessageBox.Show(Vehicle.VehicleRecord.EnterWeight.ToString()+"应为"+i.ToString());
+            //MainDataContext.text = "cock";
+            //MessageBox.Show(tb1.Text);
         }
 
-
-        
-        /// <summary>
-        /// 串口读取数据
-        /// </summary>
-        private void port_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
+        private void btnEnter_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                string strReceive;
-                byte firstByte = Convert.ToByte(serialPort.ReadByte());
-                if (firstByte == 0x02)
-                {
-                    int bytesRead = serialPort.BytesToRead;
-                    byte[] bytesData = new byte[bytesRead];
-                    byte byteData;
-
-                    for (int i = 0; i < bytesRead; i++)
-                    {
-                        byteData = Convert.ToByte(serialPort.ReadByte());
-                        bytesData[i] = byteData;
-                        if (byteData == 0x03)//结束
-                        {
-                            break;
-                        }
-                    }
-                    strReceive = Encoding.Default.GetString(bytesData);
-                    byte[] firstBytes = new byte[1];
-                    firstBytes[0] = firstByte;
-                    recievedData = Encoding.Default.GetString(firstBytes) + Encoding.Default.GetString(bytesData);
-                    Dispatcher.Invoke(DispatcherPriority.Send, new UpdateUiTextDelegate(DataWrited), recievedData);
-                    Dispatcher.Invoke(DispatcherPriority.Send, new UpdateUiTextDelegate(HexDataWrited), BitConverter.ToString(firstBytes) + "-" + BitConverter.ToString(bytesData));
-                    Dispatcher.Invoke(DispatcherPriority.Send, new UpdateUiTextDelegate(WeightDataWrited), GetWeightOfPort(strReceive));
-                }
-                else
-                {
-                    // Collecting the characters received to our 'buffer' (string).
-                    byte[] firstBytes = new byte[1];
-                    firstBytes[0] = firstByte;
-                    string existing = serialPort.ReadExisting();
-                    recievedData = Encoding.Default.GetString(firstBytes) + existing;
-                    Dispatcher.Invoke(DispatcherPriority.Send, new UpdateUiTextDelegate(HexDataWrited), BitConverter.ToString(firstBytes) + "-" + BitConverter.ToString(Encoding.Default.GetBytes(existing)));
-                    // Delegate a function to display the received data.
-                    Dispatcher.Invoke(DispatcherPriority.Send, new UpdateUiTextDelegate(DataWrited), recievedData);
-                    Dispatcher.Invoke(DispatcherPriority.Send, new UpdateUiTextDelegate(WeightDataWrited), "No Weight Data");
-                }
-            }catch(Exception ex)
-            {
-                
-            }
-           
-
+            MainDataContext.EnterFlag = false;
         }
 
-        /// <summary>
-        /// 返回串口读取的重量
-        /// </summary>
-        /// <param name="?"></param>
-        /// <returns></returns>
-        private string GetWeightOfPort(string weight)
+        private void btnExit_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(weight) || (weight.IndexOf("+") < 0 && weight.IndexOf("-") < 0) || weight.Length < 6)
-                {
-                    return "0.000";
-                }
-                char sign = weight[0];
-                weight = weight.Replace("+", "");
-                weight = weight.Replace("-", "");
-                double num = int.Parse(weight.Substring(0, 6));
-                num = num / Math.Pow(10,weight[6] - 0x30);
-                return sign.ToString() + num.ToString();
-            }catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message+" Data:"+weight);
-                return "Error: " + ex.Message + " Data:" + weight;
-            }
+
+            MessageBox.Show(MainDataContext.VehicleRecord.ToString());
+            MainDataContext.Reset();
         }
 
-        private void BtnClose_Click(object sender, RoutedEventArgs e)
+        private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            if (serialPort.IsOpen)
-            {
-                serialPort.Close(); // Close port.
-
-                pBar.Value = 0;
-            }
-        }
-
-        private void BtnSendData_Click(object sender, RoutedEventArgs e)
-        {
-            if (serialPort.IsOpen)
-            {
-                //serialPort.Write(tBoxOutData.Text);
-            }
-        }
-
-        private delegate void UpdateUiTextDelegate(string text);
-        private void serialPort_DataRecieved(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
-        {
-
-            // Collecting the characters received to our 'buffer' (string).
-            recievedData = serialPort.ReadExisting();
-
-            // Delegate a function to display the received data.
-            Dispatcher.Invoke(DispatcherPriority.Send, new UpdateUiTextDelegate(DataWrited), recievedData);
-        }
-
-        private void DataWrited(string text)
-        {
-            tBoxInData.Text +=text+"\n";
-        }
-        private void HexDataWrited(string text)
-        {
-            tBoxInDataHex.Text += text + "\n";
-        }
-        private void WeightDataWrited(string text)
-        {
-            tbWeight.Text += text + "\n";
-        }
-
-        private void btnClear_Click(object sender, RoutedEventArgs e)
-        {
-            tBoxInData.Text = "";
-            tBoxInDataHex.Text = "";
-            tbWeight.Text = "";
+            VehicleRecord vehicleRecord = new VehicleRecord();
+            vehicleRecord.EnterWeight = 100;
+            vehicleRecord.ExitWeight = -1;
+            vehicleRecord.License = "豫B123456789";
+            MainDataContext.Load(vehicleRecord);
         }
     }
 }
